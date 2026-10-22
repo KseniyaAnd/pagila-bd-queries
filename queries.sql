@@ -63,3 +63,38 @@ WHERE NOT EXISTS (
     FROM inventory i
     WHERE i.film_id = f.film_id
 );
+
+
+-- Top 3 actors with the most appearances in Children movies
+
+WITH actor_counts AS (
+	SELECT 
+		a.actor_id,
+		a.first_name,
+	    a.last_name,
+		COUNT(DISTINCT fa.film_id) AS children_films_count
+	FROM film_actor fa
+	LEFT JOIN actor a
+		ON fa.actor_id = a.actor_id
+	LEFT JOIN film f
+		ON fa.film_id = f.film_id
+	LEFT JOIN film_category fc
+		ON fc.film_id = fa.film_id
+	LEFT JOIN category c
+		ON c.category_id = fc.category_id
+	WHERE c.name = 'Children'
+	GROUP BY 
+		a.actor_id,
+		a.first_name,
+	    a.last_name
+),
+actor_ranks AS (
+	SELECT 
+		*,
+		DENSE_RANK() OVER(ORDER BY children_films_count DESC) AS children_film_rank
+	FROM actor_counts
+)
+SELECT *
+FROM actor_ranks
+WHERE children_film_rank <= 3
+ORDER BY children_film_rank;
