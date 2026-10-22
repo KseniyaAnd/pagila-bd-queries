@@ -115,3 +115,63 @@ LEFT JOIN city ci
 GROUP BY ci.city_id, ci.city
 ORDER BY inactive_customers DESC
 
+
+-- Number of active and inactive customers in each city
+
+SELECT 
+	ci.city_id, 
+	ci.city,
+	COUNT(CASE WHEN c.active = 1 THEN 1 END) AS active_customers,
+    COUNT(CASE WHEN c.active = 0 THEN 1 END) AS inactive_customers
+FROM customer c
+LEFT JOIN address a
+	ON a.address_id = c.address_id
+LEFT JOIN city ci
+	ON ci.city_id = a.city_id
+GROUP BY ci.city_id, ci.city
+ORDER BY inactive_customers DESC
+
+-- Category with the most total rental hours for movies starting with 'A' and for cities containing '-'
+
+WITH rental_data AS (
+    SELECT
+        c.name AS category_name,
+        f.title,
+        ci.city AS city_name,
+        EXTRACT(EPOCH FROM (r.return_date - r.rental_date)) / 3600
+            AS rental_hours
+    FROM category c
+    JOIN film_category fc
+        ON c.category_id = fc.category_id
+    JOIN film f
+        ON fc.film_id = f.film_id
+    JOIN inventory i
+        ON i.film_id = f.film_id
+    JOIN rental r
+        ON r.inventory_id = i.inventory_id
+    JOIN customer cu
+        ON cu.customer_id = r.customer_id
+    JOIN address a
+        ON a.address_id = cu.address_id
+    JOIN city ci
+        ON ci.city_id = a.city_id
+    WHERE r.return_date IS NOT NULL
+)
+
+SELECT
+    category_name,
+    SUM(rental_hours) AS total_rental_hours
+FROM rental_data
+WHERE title LIKE 'A%'
+GROUP BY category_name
+ORDER BY total_rental_hours DESC
+LIMIT 1;
+
+SELECT
+    category_name,
+    SUM(rental_hours) AS total_rental_hours
+FROM rental_data
+WHERE city_name LIKE '%-%'
+GROUP BY category_name
+ORDER BY total_rental_hours DESC
+LIMIT 1;
