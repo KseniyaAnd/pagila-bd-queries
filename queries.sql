@@ -32,3 +32,23 @@ GROUP BY
     a.last_name
 ORDER BY rental_count DESC
 LIMIT 10
+
+
+-- Category that generated the most rental revenue
+
+SELECT 
+	c.category_id,
+	c.name,
+	SUM(p.amount) AS rental_sum
+FROM category c
+LEFT JOIN film_category fc
+	ON c.category_id = fc.category_id
+LEFT JOIN inventory i
+	ON i.film_id = fc.film_id
+LEFT JOIN rental r
+	ON r.inventory_id = i.inventory_id
+LEFT JOIN payment p
+	ON p.rental_id = r.rental_id
+GROUP BY c.category_id, c.name
+ORDER BY rental_sum DESC
+LIMIT 1
