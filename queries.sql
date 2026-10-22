@@ -52,3 +52,14 @@ LEFT JOIN payment p
 GROUP BY c.category_id, c.name
 ORDER BY rental_sum DESC
 LIMIT 1
+
+
+-- Movies that are not in the inventory
+
+SELECT f.title
+FROM film f
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM inventory i
+    WHERE i.film_id = f.film_id
+);
